@@ -1,0 +1,173 @@
+import type { Bin, PlasticPrice, Activity, Batch } from '../types';
+import { getComplianceStatus, calculateESGMetrics } from './batchUtils';
+
+// ── CSV helpers ───────────────────────────────────────────────
+
+function downloadCsv(filename: string, content: string): void {
+  const blob = new Blob([content], { type: 'text/csv;charset=utf-8;' });
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement('a');
+  link.href = url;
+  link.download = filename;
+  link.style.display = 'none';
+  document.body.appendChild(link);
+  link.click();
+  document.body.removeChild(link);
+  URL.revokeObjectURL(url);
+}
+
+function cleanBrandPrefix(companyName?: string): string {
+  if (!companyName) return '';
+  return companyName.toLowerCase().replace(/[^a-z0-9]+/g, '_') + '_';
+}
+
+function getCsvMetadata(title: string, companyName?: string): string {
+  if (!companyName) return '';
+  return `Company Name,"${companyName}"\nReport Type,"${title}"\nGenerated At,"${new Date().toLocaleString('en-IN')}"\n\n`;
+}
+
+// ── Bins Report ───────────────────────────────────────────────
+
+export function exportBinsToCSV(bins: Bin[], companyName?: string): void {
+  const brandPrefix = cleanBrandPrefix(companyName);
+  const metadata = getCsvMetadata('Bins Configuration Ledger', companyName);
+  
+  const header = [
+    'ID',
+    'Location',
+    'Zone',
+    'Fill Level (%)',
+    'Weight (kg)',
+    'Status',
+    'Last Collected',
+    'Plastic (kg)',
+    'Organic (kg)',
+    'Glass (kg)',
+    'Paper (kg)',
+    'Metal (kg)',
+  ].join(',');
+
+  const rows = bins.map((bin) => {
+    const cat = (name: string) =>
+      bin.categories.find((c) => c.name === name)?.weightKg ?? 0;
+
+    return [
+      bin.id,
+      `"${bin.location}"`,
+      bin.zone,
+      bin.fillLevel,
+      bin.weightKg,
+      bin.status,
+      bin.lastCollected,
+      cat('plastic'),
+      cat('organic'),
+      cat('glass'),
+      cat('paper'),
+      cat('metal'),
+    ].join(',');
+  });
+
+  downloadCsv(`${brandPrefix}bins_report_${dateSuffix()}.csv`, metadata + [header, ...rows].join('\n'));
+}
+
+// ── Prices Report ─────────────────────────────────────────────
+
+export function exportPricesToCSV(prices: PlasticPrice[], companyName?: string): void {
+  const brandPrefix = cleanBrandPrefix(companyName);
+  const metadata = getCsvMetadata('Market Pricing Reference', companyName);
+  
+  const header = ['Region', 'Price/kg', 'Currency', 'Trend', 'Action', 'Updated'].join(',');
+
+  const rows = prices.map((p) =>
+    [p.region, p.pricePerKg, `"${p.currency}"`, p.trend, p.action, p.updatedAt].join(',')
+  );
+
+  downloadCsv(`${brandPrefix}market_prices_${dateSuffix()}.csv`, metadata + [header, ...rows].join('\n'));
+}
+
+// ── Activity Log Report ───────────────────────────────────────
+
+export function exportActivitiesToCSV(activities: Activity[], companyName?: string): void {
+  const brandPrefix = cleanBrandPrefix(companyName);
+  const metadata = getCsvMetadata('System Activities Audit Trail', companyName);
+  
+  const header = ['ID', 'Type', 'Description', 'Timestamp', 'User'].join(',');
+
+  const rows = activities.map((a) =>
+    [a.id, a.type, `"${a.description}"`, a.timestamp, a.userId].join(',')
+  );
+
+  downloadCsv(`${brandPrefix}activity_log_${dateSuffix()}.csv`, metadata + [header, ...rows].join('\n'));
+}
+
+// ── Batch + Compliance Report ─────────────────────────────────
+
+export function exportBatchReportToCSV(batches: Batch[], companyName?: string): void {
+  const brandPrefix = cleanBrandPrefix(companyName);
+  const metadata = getCsvMetadata('Batch Cargo and Compliance Tracking Ledger', companyName);
+  const esg = calculateESGMetrics(batches);
+
+  const header = [
+    'Batch ID',
+    'Source',
+    'Location',
+    'Weight (kg)',
+    'Plastic %',
+    'Metal %',
+    'Glass %',
+    'Organic %',
+    'Paper %',
+    'Quality',
+    'Status',
+    'Destination',
+    'Operational Status',
+    'QR Verified',
+    'GPS Logged',
+    'Photo Verified',
+    'Collected At',
+    'Verified At',
+  ].join(',');
+
+  const rows = batches.map((b) =>
+    [
+      b.id,
+      b.sourceLocation,
+      `"${b.sourceLocation}"`,
+      b.weightKg,
+      b.composition.pet + b.composition.hdpe + b.composition.ldpe + b.composition.pp + b.composition.mixed,
+      b.composition.metal,
+      b.composition.glass,
+      b.composition.organic,
+      b.composition.paper,
+      b.quality || 'N/A',
+      b.status,
+      b.destination,
+      getComplianceStatus(b),
+      b.audit.qrVerified ? 'Yes' : 'No',
+      b.audit.gpsLogged ? 'Yes' : 'No',
+      b.audit.photoVerified ? 'Yes' : 'No',
+      b.timestamps.created,
+      b.timestamps.verified ?? '',
+    ].join(',')
+  );
+
+  // Append ESG summary section
+  const esgSection = [
+    '',
+    'ESG Summary',
+    `CO2 Saved (kg),${esg.co2SavedKg}`,
+    `Landfill Diverted (kg),${esg.landfillDivertedKg}`,
+    `Recycling Rate (%),${esg.recyclingPct}`,
+  ];
+
+  downloadCsv(
+    `${brandPrefix}batch_operational_status_report_${dateSuffix()}.csv`,
+    metadata + [header, ...rows, ...esgSection].join('\n')
+  );
+}
+
+// ── Helpers ───────────────────────────────────────────────────
+
+function dateSuffix(): string {
+  return new Date().toISOString().slice(0, 10);
+}
