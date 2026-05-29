@@ -36,16 +36,29 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         return { success: false, error: 'Password is required.' };
       }
 
-      if (trimmedUsername.toLowerCase() !== 'greencarib_admin' || password !== 'GreenCarib@123') {
+      const lowerUser = trimmedUsername.toLowerCase();
+      let role: User['role'];
+      let displayName: string;
+      let avatarInitials: string;
+
+      if (lowerUser === 'greencarib_admin' && password === 'GreenCarib@123') {
+        role = 'admin';
+        displayName = 'GreenCarib Admin';
+        avatarInitials = 'GA';
+      } else if (lowerUser === 'driver_john' && password === 'Driver@123') {
+        role = 'driver';
+        displayName = 'John Williams';
+        avatarInitials = 'JW';
+      } else {
         return { success: false, error: 'Invalid username or password.' };
       }
 
       const newUser: User = {
         id: `user-${Date.now()}`,
-        username: trimmedUsername.toLowerCase(),
-        role: 'admin',
-        displayName: 'GreenCarib Admin',
-        avatarInitials: 'GA',
+        username: lowerUser,
+        role,
+        displayName,
+        avatarInitials,
       };
 
       setUser(newUser);

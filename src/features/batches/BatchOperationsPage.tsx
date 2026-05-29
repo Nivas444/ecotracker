@@ -25,7 +25,7 @@ export function BatchOperationsPage() {
     metalWeightKg: 0,
     glassWeightKg: 0,
     quality: 'Medium' as 'Good' | 'Medium' | 'Poor',
-    deliveryStatus: 'COLLECTED' as BatchStatus,
+    deliveryStatus: 'CREATED' as BatchStatus,
   });
 
   // ── OPERATIONS MODALS STATE ──
@@ -184,7 +184,7 @@ export function BatchOperationsPage() {
       metalWeightKg: 0,
       glassWeightKg: 0,
       quality: 'Medium',
-      deliveryStatus: 'COLLECTED' as BatchStatus,
+      deliveryStatus: 'CREATED' as BatchStatus,
     });
   };
 
@@ -250,7 +250,7 @@ export function BatchOperationsPage() {
     updateBatch(verifyingBatch.id, updated);
     addActivity({
       type: 'verification',
-      description: `Batch ${verifyingBatch.id} processed internally at Green Carib Facility (CO₂ Saved: ${(verifyingBatch.plasticWeightKg * 1.8).toFixed(1)} kg)`,
+      description: `Batch ${verifyingBatch.id} processed internally at Green Carib Facility (CO₂ Saved: ${(verifyingBatch.plasticWeightKg * 3.0).toFixed(1)} kg)`,
       userId: user?.id || 'system',
       batchId: verifyingBatch.id,
     });
@@ -356,6 +356,7 @@ export function BatchOperationsPage() {
         {STATUS_ORDER.map((status: BatchStatus) => {
           const columnBatches = batches.filter(b => b.status === status);
           const columnColors: Record<BatchStatus, string> = {
+            CREATED: 'var(--amber-500)',
             COLLECTED: 'var(--amber-500)',
             DELIVERED: 'var(--green-400)',
             VERIFIED: 'var(--green-500)',
@@ -444,7 +445,7 @@ export function BatchOperationsPage() {
                         )}
                         <div style={{ display: 'flex', justifyContent: 'space-between', borderTop: '1px dashed var(--border)', paddingTop: '4px', color: 'var(--green-400)', fontWeight: 600 }}>
                           <span>Est. CO₂ Offset:</span>
-                          <span>~{(batch.plasticWeightKg * 1.8).toFixed(1)} kg</span>
+                          <span>~{(batch.plasticWeightKg * 3.0).toFixed(1)} kg</span>
                         </div>
                       </div>
 

@@ -22,6 +22,7 @@ export function DashboardVisuals() {
       ];
 
   const statusColors: Record<BatchStatus, string> = {
+    CREATED: 'var(--amber-500)',
     COLLECTED: 'var(--amber-500)',
     DELIVERED: 'var(--green-400)',
     VERIFIED: 'var(--green-500)',

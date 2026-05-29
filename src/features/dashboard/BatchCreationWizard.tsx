@@ -256,7 +256,7 @@ export function BatchCreationWizard({ onClose }: BatchCreationWizardProps) {
                 />
                 {formData.weightKg > 0 && formData.plasticWeightKg > 0 && (
                   <p style={{ fontSize: '12px', color: 'var(--text-muted)', marginTop: '4px' }}>
-                    CO₂ saved estimate: <strong style={{ color: '#22c55e' }}>{(formData.plasticWeightKg * 1.8).toFixed(1)} kg</strong>
+                    CO₂ saved estimate: <strong style={{ color: '#22c55e' }}>{(formData.plasticWeightKg * 3.0).toFixed(1)} kg</strong>
                   </p>
                 )}
               </div>
@@ -369,7 +369,7 @@ export function BatchCreationWizard({ onClose }: BatchCreationWizardProps) {
                 <div className="summary-row">
                   <span>Est. CO₂ Saved:</span>
                   <strong style={{ color: '#22c55e' }}>
-                    {(formData.plasticWeightKg * 1.8).toFixed(1)} kg
+                    {(formData.plasticWeightKg * 3.0).toFixed(1)} kg
                   </strong>
                 </div>
               </div>

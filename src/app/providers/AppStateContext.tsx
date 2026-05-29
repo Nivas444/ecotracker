@@ -45,14 +45,32 @@ export function AppStateProvider({ children }: { children: React.ReactNode }) {
   const [batches, setBatches] = useState<Batch[]>(mockBatches);
   const [recyclers, setRecyclers] = useState<Recycler[]>(mockRecyclers);
   const [logistics, setLogistics] = useState<LogisticsProvider[]>([]);
-  const [routes, setRoutes] = useState<Route[]>([]);
+  const [routes, setRoutes] = useState<Route[]>([
+    {
+      id: 'ROUTE-3',
+      routeName: 'Route 3',
+      driverName: 'John Williams',
+      vehicleNumber: 'GC-2045',
+      assignedBins: [
+        { binId: 'BIN-ST1', customerName: 'Hilton Resort', location: 'Hilton Resort Stop', status: 'pending' },
+        { binId: 'BIN-ST2', customerName: 'Secrets Resort', location: 'Secrets Resort Stop', status: 'pending' },
+        { binId: 'BIN-ST3', customerName: 'Iberostar', location: 'Iberostar Stop', status: 'pending' }
+      ],
+      expectedCompletionTime: new Date(new Date().setHours(16, 0, 0, 0)).toISOString(), // 4:00 PM today
+      status: 'active',
+      delayStatus: false,
+      createdAt: new Date().toISOString()
+    }
+  ]);
   const [drivers, setDrivers] = useState<Driver[]>([
     { id: 'DRV-1', driverName: 'Liam Neeson', phoneNumber: '+1-555-0199', email: 'liam@greencarib.com', experience: '8 years', assignedVehicle: 'CARIB-03' },
-    { id: 'DRV-2', driverName: 'John Doe', phoneNumber: '+1-555-0144', email: 'john@greencarib.com', experience: '3 years', assignedVehicle: 'TRK-9921' }
+    { id: 'DRV-2', driverName: 'John Doe', phoneNumber: '+1-555-0144', email: 'john@greencarib.com', experience: '3 years', assignedVehicle: 'TRK-9921' },
+    { id: 'DRV-3', driverName: 'John Williams', phoneNumber: '+1-555-0155', email: 'john.williams@greencarib.com', experience: '5 Years Experience', assignedVehicle: 'GC-2045' }
   ]);
   const [vehicles, setVehicles] = useState<Vehicle[]>([
     { id: 'VEH-1', vehicleNumber: 'CARIB-03', vehicleType: 'Waste Compactor', capacityKg: 5000, assignedDriver: 'Liam Neeson', status: 'Available' },
-    { id: 'VEH-2', vehicleNumber: 'TRK-9921', vehicleType: 'Flatbed Truck', capacityKg: 3000, assignedDriver: 'John Doe', status: 'Available' }
+    { id: 'VEH-2', vehicleNumber: 'TRK-9921', vehicleType: 'Flatbed Truck', capacityKg: 3000, assignedDriver: 'John Doe', status: 'Available' },
+    { id: 'VEH-3', vehicleNumber: 'GC-2045', vehicleType: 'Waste Loader', capacityKg: 4000, assignedDriver: 'John Williams', status: 'On Route' }
   ]);
   const [branding, setBranding] = useState<BrandingConfig>({
     companyName: 'Green Carib',

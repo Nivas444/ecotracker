@@ -218,7 +218,7 @@ export function VerifiedPage() {
                   )}
                   <div style={{ display: 'flex', justifyContent: 'space-between', color: 'var(--green-400)', fontWeight: 600, borderTop: '1px dashed var(--border)', paddingTop: '4px' }}>
                     <span>CO₂ Saved:</span>
-                    <span>{(batch.plasticWeightKg * 1.8).toFixed(1)} kg</span>
+                    <span>{(batch.plasticWeightKg * 3.0).toFixed(1)} kg</span>
                   </div>
                 </div>
               </div>

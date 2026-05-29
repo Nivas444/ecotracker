@@ -22,9 +22,9 @@ export function MetricsRow() {
   // 5. Total Waste Collected (sum of all batches weightKg)
   const totalWaste = batches.reduce((sum, b) => sum + b.weightKg, 0);
 
-  // 6. CO₂ Savings (plastic weight * 1.8)
+  // 6. CO₂ Savings (plastic weight * 3.0)
   const totalPlastic = batches.reduce((sum, b) => sum + b.plasticWeightKg, 0);
-  const co2Saved = parseFloat((totalPlastic * 1.8).toFixed(1));
+  const co2Saved = parseFloat((totalPlastic * 3.0).toFixed(1));
 
   const metrics = [
     {
@@ -74,7 +74,7 @@ export function MetricsRow() {
       sub: 'Plastic offsets',
       icon: Leaf,
       color: 'var(--green-400)',
-      tooltip: 'CO₂ values are estimated using average recyclable plastic emission factors (1.8x).',
+      tooltip: 'CO₂ values are estimated using average recyclable plastic emission factors (3.0x).',
     },
   ];
 

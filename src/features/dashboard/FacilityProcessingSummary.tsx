@@ -8,7 +8,7 @@ export function FacilityProcessingSummary() {
   const totalIncoming = batches.reduce((sum, b) => sum + b.weightKg, 0);
   const plasticRecovered = batches.reduce((sum, b) => sum + b.plasticWeightKg, 0);
   const remainingProcessing = batches
-    .filter(b => b.status === 'DELIVERED' || b.status === 'COLLECTED')
+    .filter(b => b.status === 'DELIVERED' || b.status === 'COLLECTED' || b.status === 'CREATED')
     .reduce((sum, b) => sum + b.weightKg, 0);
 
   // Disposal waste = non-recyclable portion of VERIFIED batches

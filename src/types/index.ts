@@ -94,7 +94,7 @@ export interface TrendDataPoint {
 
 // ── Auth ─────────────────────────────────────────────────────
 
-export type UserRole = 'admin' | 'user';
+export type UserRole = 'admin' | 'user' | 'driver';
 
 export interface User {
   id: string;
@@ -185,7 +185,7 @@ export interface Recycler {
 
 // ── Batch Tracking ──────────────────────────────────────────
 
-export type BatchStatus = 'COLLECTED' | 'DELIVERED' | 'VERIFIED';
+export type BatchStatus = 'CREATED' | 'COLLECTED' | 'DELIVERED' | 'VERIFIED';
 export type BatchDestination = 'marketplace' | 'recycler';
 export type ComplianceStatus = 'Verified' | 'Pending';
 

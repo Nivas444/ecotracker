@@ -50,7 +50,7 @@ export function CompliancePanel() {
       </div>
 
       <p style={{ fontSize: '13px', color: 'var(--text-muted)', marginBottom: '16px' }}>
-        * CO₂ values are estimated using average recyclable plastic emission factors (1.8 kg CO₂ / kg plastic).
+        * CO₂ values are estimated using average recyclable plastic emission factors (3.0 kg CO₂ / kg plastic).
       </p>
 
       {/* ── ESG Metrics ──────────────────────────────────── */}

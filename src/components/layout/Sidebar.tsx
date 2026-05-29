@@ -21,7 +21,7 @@ export function Sidebar() {
     navigate('/login');
   };
 
-  const navItems = [
+  const allNavItems = [
     { to: '/dashboard', label: 'Dashboard', icon: LayoutDashboard },
     { to: '/bins', label: 'Bin Monitor', icon: Trash2 },
     { to: '/logistics', label: 'Logistics', icon: Users },
@@ -29,6 +29,10 @@ export function Sidebar() {
     { to: '/batches', label: 'Batch Ops', icon: Package },
     { to: '/reports', label: 'Reports', icon: FileBarChart2 },
   ];
+
+  const navItems = user?.role === 'driver'
+    ? allNavItems.filter(item => item.to === '/dashboard')
+    : allNavItems;
 
   return (
     <aside className="sidebar">
@@ -65,12 +69,26 @@ export function Sidebar() {
           </span>
           <div className="user-info">
             <span className="user-name">{user?.displayName}</span>
-            <span className="role-badge role-badge--admin" style={{
-              background: 'rgba(51, 126, 105, 0.2)',
-              color: 'var(--primary)'
-            }}>
-              Admin
-            </span>
+            {user?.role === 'driver' ? (
+              <span className="role-badge" style={{
+                background: 'rgba(245, 158, 11, 0.2)',
+                color: 'var(--amber-400)',
+                fontSize: '11px',
+                fontWeight: 600,
+                padding: '2px 6px',
+                borderRadius: '4px',
+                width: 'fit-content'
+              }}>
+                Driver
+              </span>
+            ) : (
+              <span className="role-badge role-badge--admin" style={{
+                background: 'rgba(51, 126, 105, 0.2)',
+                color: 'var(--primary)'
+              }}>
+                Admin
+              </span>
+            )}
           </div>
         </div>
         <button className="logout-btn" onClick={handleLogout} title="Logout">

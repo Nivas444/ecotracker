@@ -60,7 +60,7 @@ export function ReportingSummary() {
               {co2Saved.toLocaleString('en-IN')} kg CO₂ Saved
             </div>
             <p style={{ fontSize: '9px', color: 'var(--text-dim)', marginTop: '2px', lineHeight: '1.2' }}>
-              CO₂ Saved = Plastic Weight × 1.8. Estimated using average recyclable plastic factors.
+              CO₂ Saved = Plastic Weight × 3.0. Estimated using average recyclable plastic factors.
             </p>
           </div>
         </div>

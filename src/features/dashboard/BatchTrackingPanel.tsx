@@ -26,6 +26,7 @@ import { BatchCreationWizard } from './BatchCreationWizard';
 // ── Status color map ──────────────────────────────────────────
 
 const STATUS_COLORS: Record<BatchStatus, string> = {
+  CREATED: '#f59e0b',
   COLLECTED: '#f59e0b',
   DELIVERED: '#14b8a6',
   VERIFIED: '#22c55e',
@@ -180,7 +181,7 @@ export function BatchTrackingPanel() {
                           {batch.plasticWeightKg} kg plastic
                         </span>
                         <span style={{ color: '#22c55e' }}>
-                          ~{(batch.plasticWeightKg * 1.8).toFixed(1)} kg CO₂ saved
+                          ~{(batch.plasticWeightKg * 3.0).toFixed(1)} kg CO₂ saved
                         </span>
                       </div>
 

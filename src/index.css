@@ -2081,3 +2081,136 @@ body {
   grid-template-columns: 1fr 1fr;
   gap: 12px;
 }
+
+/* ============================================================
+   Global Typography Scale-Up Enhancements
+   ============================================================ */
+
+html {
+  font-size: 17px !important; /* Scale all rem units globally by 6.25% */
+}
+
+body {
+  font-size: 15px !important; /* Increase baseline body text size from 14px to 15px */
+}
+
+/* Card titles and headers */
+.card-title, 
+.card-header h3, 
+.compliance-section-title, 
+.audit-history-title {
+  font-size: 16.5px !important;
+}
+
+/* Sidebar navigation */
+.nav-link {
+  font-size: 15.5px !important;
+}
+
+.brand-name {
+  font-size: 16px !important;
+}
+
+.brand-name small {
+  font-size: 13px !important;
+}
+
+.user-name {
+  font-size: 14.5px !important;
+}
+
+/* Metrics and statistics text override */
+.metric-label {
+  font-size: 13px !important;
+}
+
+.metric-value {
+  font-size: 18.5px !important;
+}
+
+.metric-sub {
+  font-size: 12px !important;
+}
+
+/* Tables, lists and ledgers */
+.bins-table, 
+.routes-table, 
+table {
+  font-size: 14.5px !important;
+}
+
+.bin-id-cell, 
+.date-cell, 
+.activity-time, 
+.audit-log-item, 
+.timeline-time {
+  font-size: 13px !important;
+}
+
+/* Badges, chips, and states */
+.status-chip, 
+.zone-badge, 
+.compliance-badge, 
+.action-badge, 
+.role-badge, 
+.destination-badge,
+.alert-chip,
+.alert-severity-badge {
+  font-size: 12.5px !important;
+}
+
+/* Tab button controllers */
+.tab-btn, 
+.reports-page button.btn {
+  font-size: 15px !important;
+}
+
+/* Forms, labels, and inputs */
+.form-label, 
+label {
+  font-size: 13.5px !important;
+}
+
+.form-control, 
+.form-input, 
+.search-input, 
+select, 
+input {
+  font-size: 15px !important;
+}
+
+/* Buttons */
+.btn, 
+.btn-primary, 
+.btn-secondary, 
+.btn-danger, 
+.btn-export {
+  font-size: 15px !important;
+}
+
+/* Recharts SVG Text Scaling */
+.recharts-cartesian-axis-tick text {
+  font-size: 12px !important;
+}
+
+.recharts-legend-item-text {
+  font-size: 13px !important;
+}
+
+.recharts-default-tooltip {
+  font-size: 13.5px !important;
+}
+
+/* Override inline font sizes (target both React development server & build formats) */
+[style*="font-size: 9px"], [style*="font-size:9px"] { font-size: 10.5px !important; }
+[style*="font-size: 10px"], [style*="font-size:10px"] { font-size: 11.5px !important; }
+[style*="font-size: 11px"], [style*="font-size:11px"] { font-size: 12.5px !important; }
+[style*="font-size: 12px"], [style*="font-size:12px"] { font-size: 13.5px !important; }
+[style*="font-size: 13px"], [style*="font-size:13px"] { font-size: 14.5px !important; }
+[style*="font-size: 14px"], [style*="font-size:14px"] { font-size: 15.5px !important; }
+[style*="font-size: 15px"], [style*="font-size:15px"] { font-size: 16.5px !important; }
+[style*="font-size: 16px"], [style*="font-size:16px"] { font-size: 17.5px !important; }
+[style*="font-size: 18px"], [style*="font-size:18px"] { font-size: 19.5px !important; }
+[style*="font-size: 22px"], [style*="font-size:22px"] { font-size: 24.5px !important; }
+[style*="font-size: 24px"], [style*="font-size:24px"] { font-size: 26.5px !important; }
+

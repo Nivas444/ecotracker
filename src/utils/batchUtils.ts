@@ -11,7 +11,7 @@ import type {
 // ── Status progression order ──────────────────────────────────
 
 const STATUS_ORDER: BatchStatus[] = [
-  'COLLECTED',
+  'CREATED',
   'DELIVERED',
   'VERIFIED',
 ];
@@ -135,7 +135,7 @@ export function createManualBatch(data: {
     glassWeightKg: data.glassWeightKg,
     composition,
     quality: data.quality,
-    status: 'COLLECTED',
+    status: 'CREATED',
     destination: 'recycler',
     ownerId: data.ownerId,
     timestamps: {
@@ -174,11 +174,11 @@ export function advanceBatchStatus(batch: Batch): Batch {
 // ── CO2 Calculation ───────────────────────────────────────────
 
 /**
- * CO₂ saved = plasticWeightKg × 1.8 (average mixed recyclable plastic factor).
+ * CO₂ saved = plasticWeightKg × 3.0 (average mixed recyclable plastic factor).
  * Source: average emission factor for mixed recyclable plastics.
  */
 export function calculateCO2(batches: Batch[]): number {
-  const CO2_FACTOR = 1.8; // kg CO₂ saved per kg of plastic recycled
+  const CO2_FACTOR = 3.0; // kg CO₂ saved per kg of plastic recycled
   let totalCO2 = 0;
 
   for (const b of batches) {
@@ -236,6 +236,7 @@ export function getStatusIndex(status: BatchStatus): number {
 
 export function getStatusLabel(status: BatchStatus): string {
   const labels: Record<BatchStatus, string> = {
+    CREATED: 'Created',
     COLLECTED: 'Collected',
     DELIVERED: 'Delivered',
     VERIFIED: 'Verified',

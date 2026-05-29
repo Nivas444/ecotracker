@@ -9,6 +9,7 @@ import {
   Legend, ResponsiveContainer, PieChart, Pie, Cell, LineChart, Line 
 } from 'recharts';
 import { exportBatchReportToCSV } from '../../utils/export';
+import { jsPDF } from 'jspdf';
 
 type ReportTab = 'operational' | 'waste' | 'esg';
 
@@ -120,20 +121,488 @@ export function ReportsPage() {
   }).sort((a, b) => b.weight - a.weight).slice(0, 5);
 
   // ── 3. ESG CALCS ──
-  // Formula: CO2 Saved = Plastic Weight * 1.8
-  const co2Saved = plasticRecovered * 1.8;
+  // Formula: CO2 Saved = Plastic Weight * 3.0
+  const co2Saved = plasticRecovered * 3.0;
   const wasteDiverted = totalWasteCollected; 
   const recyclingRate = totalWasteCollected > 0 ? Math.round(((plasticRecovered + glassRecovered + metalRecovered) / totalWasteCollected) * 100) : 0;
 
   // Weekly ESG offset trend
   const weeklyEsgData = filteredBatches.map(b => ({
     date: new Date(b.timestamps.created).toLocaleDateString('en-IN', { month: 'short', day: 'numeric' }),
-    co2: parseFloat((b.plasticWeightKg * 1.8).toFixed(1)),
+    co2: parseFloat((b.plasticWeightKg * 3.0).toFixed(1)),
     weight: b.weightKg,
   })).reverse().slice(0, 8);
 
-  const handlePrintPDF = () => {
-    window.print();
+  const handlePrintPDF = async () => {
+    const doc = new jsPDF({
+      orientation: 'portrait',
+      unit: 'mm',
+      format: 'a4',
+    });
+
+    const nowStr = new Date().toLocaleString('en-IN', {
+      day: '2-digit',
+      month: 'short',
+      year: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit',
+    });
+
+    // Load branding logo
+    const logoBase64 = await new Promise<string | null>((resolve) => {
+      const img = new Image();
+      img.crossOrigin = 'Anonymous';
+      img.onload = () => {
+        try {
+          const canvas = document.createElement('canvas');
+          canvas.width = img.naturalWidth;
+          canvas.height = img.naturalHeight;
+          const ctx = canvas.getContext('2d');
+          if (ctx) {
+            ctx.drawImage(img, 0, 0);
+            resolve(canvas.toDataURL('image/png'));
+          } else {
+            resolve(null);
+          }
+        } catch {
+          resolve(null);
+        }
+      };
+      img.onerror = () => resolve(null);
+      img.src = branding.logoUrl || '/image.png';
+    });
+
+    // Helper functions for drawing
+    const drawHeader = (reportTitle: string) => {
+      // Draw Logo
+      if (logoBase64) {
+        doc.addImage(logoBase64, 'PNG', 20, 20, 16, 16);
+      } else {
+        // Fallback: draw logo block
+        doc.setFillColor(51, 126, 105);
+        doc.roundedRect(20, 20, 16, 16, 2, 2, 'F');
+        doc.setFont('helvetica', 'bold');
+        doc.setFontSize(10);
+        doc.setTextColor(255, 255, 255);
+        doc.text('GC', 28, 30, { align: 'center' });
+      }
+
+      // Brand text
+      doc.setFont('helvetica', 'bold');
+      doc.setFontSize(16);
+      doc.setTextColor(51, 126, 105); // --primary
+      doc.text(branding.companyName || 'Green Carib', 40, 29);
+
+      doc.setFont('helvetica', 'normal');
+      doc.setFontSize(8.5);
+      doc.setTextColor(115, 140, 130); // --text-dim
+      doc.text('Smart Waste Management Dashboard', 40, 34);
+
+      // Report Header info (right aligned)
+      doc.setFont('helvetica', 'normal');
+      doc.setFontSize(8.5);
+      doc.setTextColor(115, 140, 130);
+      doc.text('EXECUTIVE SUMMARY REPORT', 190, 24, { align: 'right' });
+
+      doc.setFont('helvetica', 'bold');
+      doc.setFontSize(11);
+      doc.setTextColor(51, 126, 105);
+      doc.text(reportTitle.toUpperCase(), 190, 30, { align: 'right' });
+
+      // Divider line
+      doc.setDrawColor(36, 54, 48); // --border
+      doc.setLineWidth(0.4);
+      doc.line(20, 42, 190, 42);
+    };
+
+    const drawFooter = () => {
+      doc.setDrawColor(36, 54, 48);
+      doc.setLineWidth(0.3);
+      doc.line(20, 275, 190, 275);
+
+      doc.setFont('helvetica', 'normal');
+      doc.setFontSize(7.5);
+      doc.setTextColor(115, 140, 130);
+      doc.text('Confidential - Generated via Green Carib EcoTracker', 20, 281);
+      doc.text('Page 1 of 1', 190, 281, { align: 'right' });
+    };
+
+    const drawMetadata = () => {
+      doc.setFillColor(244, 246, 245); // light card background
+      doc.roundedRect(20, 47, 170, 16, 2, 2, 'F');
+
+      doc.setFont('helvetica', 'bold');
+      doc.setFontSize(8.5);
+      doc.setTextColor(51, 126, 105);
+      
+      // Col 1
+      doc.text('DOCUMENT DETAILS', 25, 52);
+      doc.setFont('helvetica', 'normal');
+      doc.setTextColor(15, 21, 19); // dark text
+      doc.text(`Generated Date: ${nowStr}`, 25, 58);
+
+      // Col 2
+      doc.setFont('helvetica', 'bold');
+      doc.setTextColor(51, 126, 105);
+      doc.text('OPERATIONAL FILTERS', 105, 52);
+      doc.setFont('helvetica', 'normal');
+      doc.setTextColor(15, 21, 19);
+      
+      const routeText = selectedRoute === 'all' ? 'All' : routes.find(r => r.id === selectedRoute)?.routeName || 'All';
+      const hotelText = selectedHotel === 'all' ? 'All' : selectedHotel;
+      const driverText = selectedDriver === 'all' ? 'All' : selectedDriver;
+      const dateText = (startDate || endDate) ? `${startDate || 'Start'} to ${endDate || 'End'}` : 'All Time';
+      
+      doc.text(`Route: ${routeText} | Hotel: ${hotelText} | Driver: ${driverText}`, 105, 57);
+      doc.text(`Timeline: ${dateText}`, 105, 61);
+    };
+
+    const drawMetricCards = (cards: Array<{ label: string; value: string }>) => {
+      const cardWidth = (170 - (cards.length - 1) * 5) / cards.length;
+      const cardHeight = 22;
+      const y = 68;
+
+      cards.forEach((card, idx) => {
+        const x = 20 + idx * (cardWidth + 5);
+        
+        // Draw card border & fill
+        doc.setFillColor(244, 246, 245);
+        doc.setDrawColor(212, 222, 218); // light border
+        doc.setLineWidth(0.2);
+        doc.roundedRect(x, y, cardWidth, cardHeight, 1.5, 1.5, 'FD');
+
+        // Draw card label
+        doc.setFont('helvetica', 'bold');
+        doc.setFontSize(7.5);
+        doc.setTextColor(115, 140, 130);
+        doc.text(card.label.toUpperCase(), x + 4, y + 6);
+
+        // Draw card value
+        doc.setFont('helvetica', 'bold');
+        doc.setFontSize(13);
+        doc.setTextColor(51, 126, 105);
+        doc.text(card.value, x + 4, y + 15);
+      });
+    };
+
+    const drawSectionHeader = (title: string, y: number) => {
+      doc.setFont('helvetica', 'bold');
+      doc.setFontSize(10.5);
+      doc.setTextColor(51, 126, 105);
+      doc.text(title.toUpperCase(), 20, y);
+      
+      doc.setDrawColor(51, 126, 105);
+      doc.setLineWidth(0.4);
+      doc.line(20, y + 2, 190, y + 2);
+    };
+
+    if (activeTab === 'operational') {
+      drawHeader('Operational Analytics');
+      drawMetadata();
+
+      const activeRoutesCount = filteredRoutes.filter(r => r.status === 'active').length;
+      const fleetUtil = filteredRoutes.length > 0 ? Math.round((activeRoutesCount / filteredRoutes.length) * 100) : 0;
+
+      drawMetricCards([
+        { label: 'Total Collections', value: String(totalPickups) },
+        { label: 'Active Routes', value: String(activeRoutesCount) },
+        { label: 'Delayed Routes', value: String(totalDelayedRoutes) },
+        { label: 'Fleet Utilization', value: `${fleetUtil}%` },
+      ]);
+
+      // Section: Driver performance
+      let currentY = 102;
+      drawSectionHeader('Driver Performance Summary', currentY);
+
+      currentY += 8;
+      // Draw Table Header
+      doc.setFillColor(237, 240, 238);
+      doc.rect(20, currentY, 170, 7, 'F');
+      doc.setFont('helvetica', 'bold');
+      doc.setFontSize(8.5);
+      doc.setTextColor(51, 126, 105);
+      doc.text('Driver Name', 25, currentY + 5);
+      doc.text('Collections Completed', 95, currentY + 5, { align: 'center' });
+      doc.text('Route Completion Rate', 155, currentY + 5, { align: 'center' });
+
+      currentY += 7;
+      doc.setFont('helvetica', 'normal');
+      doc.setFontSize(8.5);
+      doc.setTextColor(15, 21, 19);
+
+      if (driverPerformanceData.length === 0) {
+        doc.text('No driver logs loaded in current selection.', 25, currentY + 6);
+        currentY += 10;
+      } else {
+        driverPerformanceData.forEach((driver) => {
+          doc.text(driver.name || 'Unknown', 25, currentY + 5.5);
+          doc.text(String(driver.collections), 95, currentY + 5.5, { align: 'center' });
+          doc.text(`${driver.routeCompletion}%`, 155, currentY + 5.5, { align: 'center' });
+
+          doc.setDrawColor(237, 240, 238);
+          doc.setLineWidth(0.2);
+          doc.line(20, currentY + 8, 190, currentY + 8);
+          currentY += 8;
+        });
+      }
+
+      // Section: Route Monitoring Widget
+      currentY += 6;
+      drawSectionHeader('Route Efficiency Analysis', currentY);
+
+      currentY += 8;
+      // Draw Table Header
+      doc.setFillColor(237, 240, 238);
+      doc.rect(20, currentY, 170, 7, 'F');
+      doc.setFont('helvetica', 'bold');
+      doc.setFontSize(8.5);
+      doc.setTextColor(51, 126, 105);
+      doc.text('Route Name', 25, currentY + 5);
+      doc.text('Vehicle Info', 75, currentY + 5);
+      doc.text('Assigned Driver', 115, currentY + 5);
+      doc.text('Operational Status', 170, currentY + 5, { align: 'center' });
+
+      currentY += 7;
+      doc.setFont('helvetica', 'normal');
+      doc.setFontSize(8.5);
+      doc.setTextColor(15, 21, 19);
+
+      if (filteredRoutes.length === 0) {
+        doc.text('No routes mapped to current filters.', 25, currentY + 6);
+        currentY += 10;
+      } else {
+        filteredRoutes.forEach((route) => {
+          doc.text(route.routeName, 25, currentY + 5.5);
+          doc.text(route.vehicleNumber || 'N/A', 75, currentY + 5.5);
+          doc.text(route.driverName || 'N/A', 115, currentY + 5.5);
+          
+          const compl = route.status === 'completed';
+          doc.setFont('helvetica', 'bold');
+          if (compl) {
+            doc.setTextColor(34, 197, 94); // Green
+            doc.text('COMPLETED', 170, currentY + 5.5, { align: 'center' });
+          } else {
+            // Check if delayed
+            const isDelayed = new Date().getTime() > new Date(route.expectedCompletionTime).getTime();
+            if (isDelayed) {
+              doc.setTextColor(239, 68, 68); // Red
+              doc.text('DELAYED', 170, currentY + 5.5, { align: 'center' });
+            } else {
+              doc.setTextColor(245, 158, 11); // Amber
+              doc.text('ACTIVE', 170, currentY + 5.5, { align: 'center' });
+            }
+          }
+          doc.setFont('helvetica', 'normal');
+          doc.setTextColor(15, 21, 19);
+
+          doc.setDrawColor(237, 240, 238);
+          doc.setLineWidth(0.2);
+          doc.line(20, currentY + 8, 190, currentY + 8);
+          currentY += 8;
+        });
+      }
+
+      drawFooter();
+    } else if (activeTab === 'waste') {
+      drawHeader('Waste & Processing Reports');
+      drawMetadata();
+
+      drawMetricCards([
+        { label: 'Waste Collected', value: `${totalWasteCollected.toLocaleString('en-IN')} kg` },
+        { label: 'Plastic Recovered', value: `${plasticRecovered.toLocaleString('en-IN')} kg` },
+        { label: 'Overflow Alerts', value: String(overflowIncidentsCount) },
+        { label: 'Average Bin Fill', value: `${avgBinFill}%` },
+      ]);
+
+      // Highlight Diversion Rate
+      doc.setFillColor(51, 126, 105, 0.05); // light green accent background
+      doc.setDrawColor(51, 126, 105, 0.2);
+      doc.setLineWidth(0.3);
+      doc.roundedRect(20, 95, 170, 10, 1, 1, 'FD');
+      
+      doc.setFont('helvetica', 'bold');
+      doc.setFontSize(8.5);
+      doc.setTextColor(51, 126, 105);
+      doc.text('DIVERSION PROFILE:', 25, 101.5);
+      doc.setFont('helvetica', 'normal');
+      doc.setTextColor(15, 21, 19);
+      doc.text(`Calculated Waste Diversion Rate: ${recyclingRate}% (from active collections in the selected time range)`, 62, 101.5);
+
+      // Section: Processing audit
+      let currentY = 114;
+      drawSectionHeader('Facility Waste Processing Summary', currentY);
+
+      currentY += 8;
+      // Draw grid boxes for processing summary
+      const boxW = 82;
+      const boxH = 15;
+
+      const remainingInProcess = filteredBatches
+        .filter(b => b.status !== 'VERIFIED')
+        .reduce((sum, b) => sum + b.weightKg, 0);
+
+      const disposalResidue = filteredBatches
+        .filter(b => b.status === 'VERIFIED')
+        .reduce((sum, b) => {
+          const recyclable = b.plasticWeightKg + (b.metalWeightKg ?? 0) + (b.glassWeightKg ?? 0);
+          return sum + Math.max(0, b.weightKg - recyclable);
+        }, 0);
+
+      const procMetrics = [
+        { label: 'Total Incoming waste', value: `${totalWasteCollected.toLocaleString('en-IN')} kg`, sub: 'All batches collected' },
+        { label: 'Plastic processed', value: `${plasticRecovered.toLocaleString('en-IN')} kg`, sub: 'Processed and scaled' },
+        { label: 'Remaining in process', value: `${remainingInProcess.toLocaleString('en-IN')} kg`, sub: 'Awaiting verification scales' },
+        { label: 'Disposal residue', value: `${disposalResidue.toLocaleString('en-IN')} kg`, sub: 'Non-recyclable residues' },
+      ];
+
+      // Draw Row 1 boxes
+      procMetrics.slice(0, 2).forEach((metric, idx) => {
+        const x = 20 + idx * 88;
+        doc.setFillColor(244, 246, 245);
+        doc.roundedRect(x, currentY, boxW, boxH, 1, 1, 'F');
+        doc.setFont('helvetica', 'bold');
+        doc.setFontSize(7.5);
+        doc.setTextColor(115, 140, 130);
+        doc.text(metric.label.toUpperCase(), x + 4, currentY + 5);
+        doc.setFont('helvetica', 'bold');
+        doc.setFontSize(10.5);
+        doc.setTextColor(51, 126, 105);
+        doc.text(metric.value, x + 4, currentY + 11);
+        doc.setFont('helvetica', 'normal');
+        doc.setFontSize(6.5);
+        doc.setTextColor(115, 140, 130);
+        doc.text(metric.sub, x + boxW - 4, currentY + 11, { align: 'right' });
+      });
+
+      currentY += 18;
+      // Draw Row 2 boxes
+      procMetrics.slice(2, 4).forEach((metric, idx) => {
+        const x = 20 + idx * 88;
+        doc.setFillColor(244, 246, 245);
+        doc.roundedRect(x, currentY, boxW, boxH, 1, 1, 'F');
+        doc.setFont('helvetica', 'bold');
+        doc.setFontSize(7.5);
+        doc.setTextColor(115, 140, 130);
+        doc.text(metric.label.toUpperCase(), x + 4, currentY + 5);
+        doc.setFont('helvetica', 'bold');
+        doc.setFontSize(10.5);
+        doc.setTextColor(51, 126, 105);
+        doc.text(metric.value, x + 4, currentY + 11);
+        doc.setFont('helvetica', 'normal');
+        doc.setFontSize(6.5);
+        doc.setTextColor(115, 140, 130);
+        doc.text(metric.sub, x + boxW - 4, currentY + 11, { align: 'right' });
+      });
+
+      // Section: Waste Composition
+      currentY += boxH + 10;
+      drawSectionHeader('Recovered Waste Composition Matrix', currentY);
+
+      currentY += 8;
+      // Header for composition table
+      doc.setFillColor(237, 240, 238);
+      doc.rect(20, currentY, 170, 7, 'F');
+      doc.setFont('helvetica', 'bold');
+      doc.setFontSize(8.5);
+      doc.setTextColor(51, 126, 105);
+      doc.text('Waste Category', 25, currentY + 5);
+      doc.text('Recovered Weight (kg)', 105, currentY + 5, { align: 'center' });
+      doc.text('Proportion (%)', 165, currentY + 5, { align: 'center' });
+
+      currentY += 7;
+      doc.setFont('helvetica', 'normal');
+      doc.setFontSize(8.5);
+      doc.setTextColor(15, 21, 19);
+
+      if (wasteCompositionData.length === 0) {
+        doc.text('No composition logs registered.', 25, currentY + 6);
+      } else {
+        const totalCompVal = wasteCompositionData.reduce((sum, item) => sum + item.value, 0);
+        wasteCompositionData.forEach((item) => {
+          const pctVal = totalCompVal > 0 ? Math.round((item.value / totalCompVal) * 100) : 0;
+          doc.text(item.name, 25, currentY + 5.5);
+          doc.text(`${item.value.toLocaleString('en-IN')} kg`, 105, currentY + 5.5, { align: 'center' });
+          doc.text(`${pctVal}%`, 165, currentY + 5.5, { align: 'center' });
+
+          doc.setDrawColor(237, 240, 238);
+          doc.setLineWidth(0.2);
+          doc.line(20, currentY + 8, 190, currentY + 8);
+          currentY += 8;
+        });
+      }
+
+      drawFooter();
+    } else if (activeTab === 'esg') {
+      drawHeader('Sustainability & ESG Reports');
+      drawMetadata();
+
+      drawMetricCards([
+        { label: 'CO₂ Saved', value: `${co2Saved.toLocaleString('en-IN')} kg` },
+        { label: 'Waste Diverted', value: `${wasteDiverted.toLocaleString('en-IN')} kg` },
+        { label: 'Recovery Rate', value: `${recyclingRate}%` },
+        { label: 'Diversion Rate', value: `${recyclingRate}%` },
+      ]);
+
+      // Section: Environmental offset trend
+      let currentY = 102;
+      drawSectionHeader('Carbon Savings & Waste Diversion Trend Ledger', currentY);
+
+      currentY += 8;
+      // Header for trend table
+      doc.setFillColor(237, 240, 238);
+      doc.rect(20, currentY, 170, 7, 'F');
+      doc.setFont('helvetica', 'bold');
+      doc.setFontSize(8.5);
+      doc.setTextColor(51, 126, 105);
+      doc.text('Collection Date', 25, currentY + 5);
+      doc.text('Total Waste Collected (kg)', 95, currentY + 5, { align: 'center' });
+      doc.text('Carbon Offset (CO₂ Saved kg)', 155, currentY + 5, { align: 'center' });
+
+      currentY += 7;
+      doc.setFont('helvetica', 'normal');
+      doc.setFontSize(8.5);
+      doc.setTextColor(15, 21, 19);
+
+      if (weeklyEsgData.length === 0) {
+        doc.text('No sustainability trends registered in the active system.', 25, currentY + 6);
+        currentY += 10;
+      } else {
+        weeklyEsgData.forEach((data) => {
+          doc.text(data.date, 25, currentY + 5.5);
+          doc.text(`${data.weight.toLocaleString('en-IN')} kg`, 95, currentY + 5.5, { align: 'center' });
+          doc.text(`${data.co2.toLocaleString('en-IN')} kg`, 155, currentY + 5.5, { align: 'center' });
+
+          doc.setDrawColor(237, 240, 238);
+          doc.setLineWidth(0.2);
+          doc.line(20, currentY + 8, 190, currentY + 8);
+          currentY += 8;
+        });
+      }
+
+      // Section: ESG Calculation methodology box
+      currentY += 10;
+      doc.setFillColor(244, 246, 245);
+      doc.setDrawColor(51, 126, 105, 0.25);
+      doc.setLineWidth(0.3);
+      doc.roundedRect(20, currentY, 170, 26, 2, 2, 'FD');
+
+      doc.setFont('helvetica', 'bold');
+      doc.setFontSize(8.5);
+      doc.setTextColor(51, 126, 105);
+      doc.text('ESG CALCULATION NOTES & REGULATORY FRAMEWORK', 25, currentY + 6);
+
+      doc.setFont('helvetica', 'normal');
+      doc.setFontSize(7.5);
+      doc.setTextColor(15, 21, 19);
+      doc.text('1. Carbon Offset Multiplier: CO₂ Saved = (Plastic Recovered in kg) × 3.0. This coefficient is derived from standard', 25, currentY + 12);
+      doc.text('   emissions factors for mixed recycled plastics relative to virgin raw material extraction.', 25, currentY + 16);
+      doc.text('2. Waste Diversion & Recovery: Waste Diverted is defined as solid waste processed and successfully rerouted from local', 25, currentY + 21);
+      doc.text('   landfills. Recovery and Diversion rates reflect the net recyclable percentage of total gathered waste cargo.', 25, currentY + 25);
+
+      drawFooter();
+    }
+
+    doc.save(`${branding.companyName.toLowerCase().replace(/[^a-z0-9]+/g, '_')}_${activeTab}_report_${new Date().toISOString().slice(0, 10)}.pdf`);
   };
 
   return (
@@ -241,7 +710,7 @@ export function ReportsPage() {
           <button className="btn btn-secondary" onClick={handlePrintPDF} style={{ height: '34px', borderRadius: '6px', fontSize: '12px' }}>
             Export PDF Report
           </button>
-          <button className="btn btn-primary" onClick={() => exportBatchReportToCSV(filteredBatches, branding.companyName)} style={{ height: '34px', borderRadius: '6px', fontSize: '12px' }}>
+          <button className="btn btn-primary" onClick={() => exportBatchReportToCSV(filteredBatches, branding.companyName, activeTab === 'operational' ? 'Operational Report' : activeTab === 'waste' ? 'Waste Report' : 'Sustainability & Diversion Report')} style={{ height: '34px', borderRadius: '6px', fontSize: '12px' }}>
             <Download size={13} /> Export CSV Ledger
           </button>
         </div>
@@ -552,7 +1021,7 @@ export function ReportsPage() {
                       <div style={{ marginTop: '16px', display: 'flex', alignItems: 'center', gap: '8px', background: 'rgba(51,126,105,0.03)', border: '1px solid var(--border)', padding: '10px 14px', borderRadius: '6px' }}>
               <Leaf size={20} style={{ color: 'var(--primary)', flexShrink: 0 }} />
               <div style={{ fontSize: '12px', color: 'var(--text-muted)', lineHeight: '1.4' }}>
-                <strong>CO₂ Calculations Note:</strong> CO₂ Saved = Plastic Weight × 1.8. CO₂ values are estimated using average recyclable plastic emission factors.
+                <strong>CO₂ Calculations Note:</strong> CO₂ Saved = Plastic Weight × 3.0. CO₂ values are estimated using average recyclable plastic emission factors.
               </div>
             </div>            </div>
             </div>
