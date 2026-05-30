@@ -2214,3 +2214,48 @@ input {
 [style*="font-size: 22px"], [style*="font-size:22px"] { font-size: 24.5px !important; }
 [style*="font-size: 24px"], [style*="font-size:24px"] { font-size: 26.5px !important; }
 
+/* Powered by SortyX footer */
+.powered-by-footer {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 2px;
+  font-family: 'Inter', sans-serif;
+  user-select: none;
+}
+
+.powered-by-label {
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--text-dim);
+}
+
+.powered-by-value {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.powered-by-logo {
+  height: 16px;
+  width: auto;
+  object-fit: contain;
+}
+
+.powered-by-brand {
+  font-size: 13.5px;
+  font-weight: 700;
+  color: var(--text);
+  letter-spacing: -0.02em;
+}
+
+.app-footer {
+  display: flex;
+  justify-content: flex-end;
+  padding: 10px 24px;
+  background: var(--surface);
+  border-top: 1px solid var(--border);
+  z-index: 10;
+}
+

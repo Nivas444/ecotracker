@@ -113,6 +113,18 @@ export function LoginPage() {
           </button>
         </form>
       </div>
+
+      {/* Powered by SortyX footer */}
+      <div style={{ position: 'absolute', bottom: '20px', right: '20px', zIndex: 10 }}>
+        <div className="powered-by-footer">
+          <div className="powered-by-label">Powered By</div>
+          <div className="powered-by-value">
+            <img src="/image-removebg.png" alt="SortyX logo" className="powered-by-logo" />
+            <span className="powered-by-brand">SortyX</span>
+          </div>
+        </div>
+      </div>
     </div>
   );
 }
+

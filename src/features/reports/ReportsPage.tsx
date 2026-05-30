@@ -172,6 +172,30 @@ export function ReportsPage() {
       img.src = branding.logoUrl || '/image.png';
     });
 
+    // Load SortyX logo
+    const sortyxLogoBase64 = await new Promise<string | null>((resolve) => {
+      const img = new Image();
+      img.crossOrigin = 'Anonymous';
+      img.onload = () => {
+        try {
+          const canvas = document.createElement('canvas');
+          canvas.width = img.naturalWidth;
+          canvas.height = img.naturalHeight;
+          const ctx = canvas.getContext('2d');
+          if (ctx) {
+            ctx.drawImage(img, 0, 0);
+            resolve(canvas.toDataURL('image/png'));
+          } else {
+            resolve(null);
+          }
+        } catch {
+          resolve(null);
+        }
+      };
+      img.onerror = () => resolve(null);
+      img.src = '/image-removebg.png';
+    });
+
     // Helper functions for drawing
     const drawHeader = (reportTitle: string) => {
       // Draw Logo
@@ -224,8 +248,25 @@ export function ReportsPage() {
       doc.setFontSize(7.5);
       doc.setTextColor(115, 140, 130);
       doc.text('Confidential - Generated via Green Carib EcoTracker', 20, 281);
-      doc.text('Page 1 of 1', 190, 281, { align: 'right' });
+      
+      // Page number centered
+      doc.text('Page 1 of 1', 105, 281, { align: 'center' });
+
+      // Powered By SortyX in the right footer
+      doc.setFont('helvetica', 'normal');
+      doc.setFontSize(7);
+      doc.setTextColor(115, 140, 130);
+      doc.text('Powered By', 172, 281.5, { align: 'right' });
+
+      if (sortyxLogoBase64) {
+        doc.addImage(sortyxLogoBase64, 'PNG', 174, 277.5, 4.5, 4.5);
+      }
+      doc.setFont('helvetica', 'bold');
+      doc.setFontSize(8.5);
+      doc.setTextColor(51, 126, 105);
+      doc.text('SortyX', 180, 281.5);
     };
+
 
     const drawMetadata = () => {
       doc.setFillColor(244, 246, 245); // light card background
@@ -1058,3 +1099,4 @@ export function ReportsPage() {
     </div>
   );
 }
+
